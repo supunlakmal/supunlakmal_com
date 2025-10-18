@@ -1,20 +1,85 @@
 "use client";
 
-import Hero from "./components/Hero";
+import { useEffect, useRef, type ReactNode } from "react";
 import AnimatedBackground from "./components/AnimatedBackground";
-import { useState } from "react";
+import Hero from "./components/Hero";
+
+type ParallaxSectionProps = {
+  id: string;
+  backgroundColor: string;
+  speed?: number;
+  className?: string;
+  children: ReactNode;
+};
+
+const ParallaxSection = ({ id, backgroundColor, speed = 0.25, className = "", children }: ParallaxSectionProps) => {
+  const backgroundRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const backgroundEl = backgroundRef.current;
+    if (!backgroundEl) {
+      return;
+    }
+
+    let frameId: number | null = null;
+
+    const updateParallax = () => {
+      const parent = backgroundEl.parentElement;
+      if (!parent) {
+        return;
+      }
+
+      const rect = parent.getBoundingClientRect();
+      const offset = -rect.top * speed;
+      backgroundEl.style.transform = `translate3d(0, ${offset}px, 0)`;
+    };
+
+    const handleScroll = () => {
+      if (frameId !== null) {
+        return;
+      }
+
+      frameId = window.requestAnimationFrame(() => {
+        updateParallax();
+        frameId = null;
+      });
+    };
+
+    updateParallax();
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll);
+
+    return () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, [speed]);
+
+  const composedClassName = `relative overflow-hidden ${className}`.trim();
+
+  return (
+    <section id={id} className={composedClassName}>
+      <div
+        ref={backgroundRef}
+        className="pointer-events-none absolute left-0 right-0 -z-10"
+        style={{
+          backgroundColor,
+          top: "-20%",
+          height: "140%",
+          transform: "translate3d(0, 0, 0)",
+          willChange: "transform",
+        }}
+      />
+      <div className="relative z-10">{children}</div>
+    </section>
+  );
+};
 
 export default function Home() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-      setMobileMenuOpen(false);
-    }
-  };
-
   // Projects Data
   const projects = [
     {
@@ -301,48 +366,10 @@ export default function Home() {
     },
   ];
 
-  // Tech stack color mapping
-  const techColors: { [key: string]: string } = {
-    React: "bg-blue-100 text-blue-700",
-    "Next.js": "bg-black text-white",
-    "Vue.js": "bg-green-100 text-green-700",
-    Angular: "bg-red-100 text-red-700",
-    "Node.js": "bg-green-100 text-green-800",
-    TypeScript: "bg-blue-100 text-blue-800",
-    JavaScript: "bg-yellow-100 text-yellow-800",
-    Python: "bg-blue-100 text-blue-600",
-    PHP: "bg-indigo-100 text-indigo-700",
-    Solana: "bg-purple-100 text-purple-700",
-    Ethereum: "bg-slate-100 text-slate-800",
-    "Web3.js": "bg-orange-100 text-orange-700",
-    Solidity: "bg-gray-800 text-white",
-    MongoDB: "bg-green-100 text-green-700",
-    PostgreSQL: "bg-blue-100 text-blue-700",
-    MySQL: "bg-blue-100 text-blue-600",
-    Firebase: "bg-yellow-100 text-yellow-700",
-    AWS: "bg-orange-100 text-orange-700",
-    Tailwind: "bg-cyan-100 text-cyan-700",
-    Laravel: "bg-red-100 text-red-600",
-    Electron: "bg-teal-100 text-teal-700",
-    "React Native": "bg-blue-200 text-blue-800",
-    Redux: "bg-purple-100 text-purple-600",
-    OpenAI: "bg-emerald-100 text-emerald-700",
-    Stripe: "bg-indigo-100 text-indigo-700",
-    SQLite: "bg-gray-100 text-gray-700",
-    XRP: "bg-gray-900 text-white",
-    "REST API": "bg-green-100 text-green-800",
-    "Video Streaming": "bg-red-100 text-red-700",
-    Smarty: "bg-yellow-100 text-yellow-800",
-    "HTML/CSS": "bg-orange-100 text-orange-600",
-    Linux: "bg-gray-800 text-white",
-    "Socket.IO": "bg-green-100 text-green-700",
-    AI: "bg-purple-100 text-purple-700",
-    "Machine Learning": "bg-purple-100 text-purple-600",
-    OpenCV: "bg-red-100 text-red-700",
-    "Computer Vision": "bg-pink-100 text-pink-700",
-    OpenPose: "bg-indigo-100 text-indigo-600",
-    "Open Source": "bg-teal-100 text-teal-700",
-  };
+  // Tech stack color mapping - unified minimal style
+  const techColors: { [key: string]: string } = {};
+  // Default style for all tech badges
+  const defaultTechStyle = "bg-gray-100 text-gray-800";
 
   return (
     <div className="min-h-screen bg-transparent relative">
@@ -350,105 +377,6 @@ export default function Home() {
       <AnimatedBackground />
 
       {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-[#e3e3e1]/95 backdrop-blur-md border-b border-gray-300 shadow-sm" style={{ zIndex: 100 }}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex justify-between items-center">
-            {/* Logo/Name */}
-            <div className="flex items-center">
-              <button
-                onClick={() => scrollToSection("hero")}
-                className="text-xl sm:text-2xl font-bold tracking-tight text-black hover:text-blue-600 transition-colors"
-              >
-                Supun Lakmal
-              </button>
-            </div>
-
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-8">
-              <button onClick={() => scrollToSection("about")} className="text-sm font-medium text-black hover:text-blue-600 transition-colors">
-                About
-              </button>
-              <button onClick={() => scrollToSection("skills")} className="text-sm font-medium text-black hover:text-blue-600 transition-colors">
-                Skills
-              </button>
-              <button onClick={() => scrollToSection("projects")} className="text-sm font-medium text-black hover:text-blue-600 transition-colors">
-                Projects
-              </button>
-              <button onClick={() => scrollToSection("experience")} className="text-sm font-medium text-black hover:text-blue-600 transition-colors">
-                Experience
-              </button>
-              <button onClick={() => scrollToSection("contact")} className="text-sm font-medium text-black hover:text-blue-600 transition-colors">
-                Contact
-              </button>
-              <a
-                href="/Supun_Lakml_CV_2025.pdf"
-                download
-                className="ml-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Download CV
-              </a>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 text-black hover:text-blue-600 transition-colors">
-              {mobileMenuOpen ? (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              ) : (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              )}
-            </button>
-          </div>
-
-          {/* Mobile Menu */}
-          {mobileMenuOpen && (
-            <div className="md:hidden mt-4 pb-4 border-t border-gray-300 pt-4">
-              <div className="flex flex-col gap-3">
-                <button
-                  onClick={() => scrollToSection("about")}
-                  className="text-left py-2 text-sm font-medium text-black hover:text-blue-600 transition-colors"
-                >
-                  About
-                </button>
-                <button
-                  onClick={() => scrollToSection("skills")}
-                  className="text-left py-2 text-sm font-medium text-black hover:text-blue-600 transition-colors"
-                >
-                  Skills
-                </button>
-                <button
-                  onClick={() => scrollToSection("projects")}
-                  className="text-left py-2 text-sm font-medium text-black hover:text-blue-600 transition-colors"
-                >
-                  Projects
-                </button>
-                <button
-                  onClick={() => scrollToSection("experience")}
-                  className="text-left py-2 text-sm font-medium text-black hover:text-blue-600 transition-colors"
-                >
-                  Experience
-                </button>
-                <button
-                  onClick={() => scrollToSection("contact")}
-                  className="text-left py-2 text-sm font-medium text-black hover:text-blue-600 transition-colors"
-                >
-                  Contact
-                </button>
-                <a
-                  href="/Supun_Lakml_CV_2025.pdf"
-                  download
-                  className="mt-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors text-center"
-                >
-                  Download CV
-                </a>
-              </div>
-            </div>
-          )}
-        </div>
-      </nav>
 
       {/* Main Content Wrapper */}
       <div className="relative" style={{ zIndex: 10 }}>
@@ -462,7 +390,7 @@ export default function Home() {
         </section>
 
         {/* About Section */}
-        <section id="about" className="py-20 px-4 bg-[#d5d5d3]/50">
+        <ParallaxSection id="about" backgroundColor="#e3e3e1" className="py-20 px-4" speed={0.18}>
           <div className="max-w-5xl mx-auto">
             <h2 className="text-4xl font-bold text-center mb-4 text-black">About Me</h2>
             <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
@@ -472,7 +400,7 @@ export default function Home() {
             <div className="grid md:grid-cols-3 gap-6 mb-12">
               {/* Experience Card */}
               <div className="bg-white p-6 rounded-xl shadow-lg text-center hover:shadow-xl transition-shadow">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
@@ -488,7 +416,7 @@ export default function Home() {
 
               {/* Current Role Card */}
               <div className="bg-white p-6 rounded-xl shadow-lg text-center hover:shadow-xl transition-shadow">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
@@ -504,7 +432,7 @@ export default function Home() {
 
               {/* Expertise Card */}
               <div className="bg-white p-6 rounded-xl shadow-lg text-center hover:shadow-xl transition-shadow">
-                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
@@ -533,7 +461,7 @@ export default function Home() {
                 </p>
 
                 <div className="grid md:grid-cols-2 gap-6 my-6">
-                  <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-6 rounded-xl border border-blue-200">
+                  <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
                     <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
                       <span className="text-2xl">⛓️</span>
                       Web3 & Blockchain
@@ -544,7 +472,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200">
+                  <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
                     <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
                       <span className="text-2xl">🚀</span>
                       Enterprise Solutions
@@ -584,35 +512,35 @@ export default function Home() {
                   <h4 className="font-bold text-gray-900 mb-4">Core Specializations:</h4>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="flex items-center gap-2 text-sm text-gray-700">
-                      <span className="text-blue-600">▸</span>
+                      <span className="text-black">▸</span>
                       <span>React & Next.js</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-700">
-                      <span className="text-blue-600">▸</span>
+                      <span className="text-black">▸</span>
                       <span>Web3 & Blockchain</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-700">
-                      <span className="text-blue-600">▸</span>
+                      <span className="text-black">▸</span>
                       <span>Node.js & Laravel</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-700">
-                      <span className="text-blue-600">▸</span>
+                      <span className="text-black">▸</span>
                       <span>React Native</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-700">
-                      <span className="text-blue-600">▸</span>
+                      <span className="text-black">▸</span>
                       <span>TypeScript</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-700">
-                      <span className="text-blue-600">▸</span>
+                      <span className="text-black">▸</span>
                       <span>AWS & Cloud</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-700">
-                      <span className="text-blue-600">▸</span>
+                      <span className="text-black">▸</span>
                       <span>CI/CD Pipelines</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-700">
-                      <span className="text-blue-600">▸</span>
+                      <span className="text-black">▸</span>
                       <span>UI/UX Design</span>
                     </div>
                   </div>
@@ -620,159 +548,196 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </section>
+        </ParallaxSection>
 
         {/* Skills Section */}
-        <section id="skills" className="py-20 px-4">
+        <ParallaxSection id="skills" backgroundColor="#e3e3e1" className="py-20 px-4" speed={0.22}>
           <div className="max-w-6xl mx-auto">
             <h2 className="text-4xl font-bold text-center mb-4 text-black">Technical Skills</h2>
-            <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-              Expertise across modern web technologies, frameworks, and development tools
-            </p>
+            <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">Expertise across modern web technologies, frameworks, and development tools</p>
 
             <div className="space-y-8">
               {/* Frontend Technologies */}
               <div className="bg-white/70 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
                 <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
                     </svg>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900">Frontend Development</h3>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <span className="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-medium text-sm hover:bg-blue-100 transition-colors">React.js</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">React.js</span>
                   <span className="px-4 py-2 bg-black text-white rounded-lg font-medium text-sm hover:bg-gray-800 transition-colors">Next.js</span>
-                  <span className="px-4 py-2 bg-green-50 text-green-700 rounded-lg font-medium text-sm hover:bg-green-100 transition-colors">Vue.js</span>
-                  <span className="px-4 py-2 bg-red-50 text-red-700 rounded-lg font-medium text-sm hover:bg-red-100 transition-colors">Angular</span>
-                  <span className="px-4 py-2 bg-cyan-50 text-cyan-700 rounded-lg font-medium text-sm hover:bg-cyan-100 transition-colors">Tailwind CSS</span>
-                  <span className="px-4 py-2 bg-pink-50 text-pink-700 rounded-lg font-medium text-sm hover:bg-pink-100 transition-colors">SCSS</span>
-                  <span className="px-4 py-2 bg-blue-50 text-blue-800 rounded-lg font-medium text-sm hover:bg-blue-100 transition-colors">TypeScript</span>
-                  <span className="px-4 py-2 bg-yellow-50 text-yellow-700 rounded-lg font-medium text-sm hover:bg-yellow-100 transition-colors">JavaScript</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">Vue.js</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">Angular</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">Tailwind CSS</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">SCSS</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">TypeScript</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">JavaScript</span>
                 </div>
               </div>
 
               {/* Backend Technologies */}
               <div className="bg-white/70 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
                 <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200">
-                  <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"
+                      />
                     </svg>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900">Backend Development</h3>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <span className="px-4 py-2 bg-green-50 text-green-800 rounded-lg font-medium text-sm hover:bg-green-100 transition-colors">Node.js</span>
-                  <span className="px-4 py-2 bg-gray-50 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-100 transition-colors">Express.js</span>
-                  <span className="px-4 py-2 bg-red-50 text-red-600 rounded-lg font-medium text-sm hover:bg-red-100 transition-colors">Laravel</span>
-                  <span className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg font-medium text-sm hover:bg-indigo-100 transition-colors">PHP</span>
-                  <span className="px-4 py-2 bg-pink-50 text-pink-600 rounded-lg font-medium text-sm hover:bg-pink-100 transition-colors">GraphQL</span>
-                  <span className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg font-medium text-sm hover:bg-blue-100 transition-colors">Python</span>
-                  <span className="px-4 py-2 bg-green-50 text-green-700 rounded-lg font-medium text-sm hover:bg-green-100 transition-colors">Socket.IO</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">Node.js</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">Express.js</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">Laravel</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">PHP</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">GraphQL</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">Python</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">Socket.IO</span>
                 </div>
               </div>
 
               {/* Databases */}
               <div className="bg-white/70 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
                 <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"
+                      />
                     </svg>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900">Databases & Storage</h3>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <span className="px-4 py-2 bg-green-50 text-green-700 rounded-lg font-medium text-sm hover:bg-green-100 transition-colors">MongoDB</span>
-                  <span className="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-medium text-sm hover:bg-blue-100 transition-colors">PostgreSQL</span>
-                  <span className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg font-medium text-sm hover:bg-blue-100 transition-colors">MySQL</span>
-                  <span className="px-4 py-2 bg-gray-50 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-100 transition-colors">SQLite</span>
-                  <span className="px-4 py-2 bg-yellow-50 text-yellow-700 rounded-lg font-medium text-sm hover:bg-yellow-100 transition-colors">Firebase</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">MongoDB</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">PostgreSQL</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">MySQL</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">SQLite</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">Firebase</span>
                 </div>
               </div>
 
               {/* Mobile & Desktop */}
               <div className="bg-white/70 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
                 <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200">
-                  <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
+                      />
                     </svg>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900">Mobile & Desktop</h3>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <span className="px-4 py-2 bg-blue-50 text-blue-800 rounded-lg font-medium text-sm hover:bg-blue-100 transition-colors">React Native</span>
-                  <span className="px-4 py-2 bg-teal-50 text-teal-700 rounded-lg font-medium text-sm hover:bg-teal-100 transition-colors">Electron.js</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">React Native</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">Electron.js</span>
                 </div>
               </div>
 
               {/* Cloud & DevOps */}
               <div className="bg-white/70 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
                 <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200">
-                  <div className="w-10 h-10 bg-gradient-to-br from-sky-500 to-sky-600 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"
+                      />
                     </svg>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900">Cloud & DevOps</h3>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <span className="px-4 py-2 bg-orange-50 text-orange-700 rounded-lg font-medium text-sm hover:bg-orange-100 transition-colors">AWS</span>
-                  <span className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg font-medium text-sm hover:bg-blue-100 transition-colors">Google Cloud</span>
-                  <span className="px-4 py-2 bg-gray-800 text-white rounded-lg font-medium text-sm hover:bg-gray-700 transition-colors">Linux</span>
-                  <span className="px-4 py-2 bg-purple-50 text-purple-600 rounded-lg font-medium text-sm hover:bg-purple-100 transition-colors">Docker</span>
-                  <span className="px-4 py-2 bg-gray-50 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-100 transition-colors">Git</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">AWS</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">Google Cloud</span>
+                  <span className="px-4 py-2 bg-black text-white rounded-lg font-medium text-sm hover:bg-gray-800 transition-colors">Linux</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">Docker</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">Git</span>
                 </div>
               </div>
 
               {/* Blockchain & Web3 */}
               <div className="bg-white/70 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
                 <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200">
-                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                      />
                     </svg>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900">Blockchain & Web3</h3>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <span className="px-4 py-2 bg-orange-50 text-orange-700 rounded-lg font-medium text-sm hover:bg-orange-100 transition-colors">Web3.js</span>
-                  <span className="px-4 py-2 bg-slate-50 text-slate-800 rounded-lg font-medium text-sm hover:bg-slate-100 transition-colors">Ethereum</span>
-                  <span className="px-4 py-2 bg-purple-50 text-purple-700 rounded-lg font-medium text-sm hover:bg-purple-100 transition-colors">Solana</span>
-                  <span className="px-4 py-2 bg-gray-800 text-white rounded-lg font-medium text-sm hover:bg-gray-700 transition-colors">Solidity</span>
-                  <span className="px-4 py-2 bg-gray-900 text-white rounded-lg font-medium text-sm hover:bg-gray-700 transition-colors">XRP Ledger</span>
-                  <span className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg font-medium text-sm hover:bg-indigo-100 transition-colors">IPFS</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">Web3.js</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">Ethereum</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">Solana</span>
+                  <span className="px-4 py-2 bg-black text-white rounded-lg font-medium text-sm hover:bg-gray-800 transition-colors">Solidity</span>
+                  <span className="px-4 py-2 bg-black text-white rounded-lg font-medium text-sm hover:bg-gray-800 transition-colors">XRP Ledger</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">IPFS</span>
                 </div>
               </div>
 
               {/* AI/ML & Special */}
               <div className="bg-white/70 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
                 <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200">
-                  <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                      />
                     </svg>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900">AI/ML & Specialized</h3>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <span className="px-4 py-2 bg-purple-50 text-purple-700 rounded-lg font-medium text-sm hover:bg-purple-100 transition-colors">Machine Learning</span>
-                  <span className="px-4 py-2 bg-purple-50 text-purple-600 rounded-lg font-medium text-sm hover:bg-purple-100 transition-colors">AI</span>
-                  <span className="px-4 py-2 bg-red-50 text-red-700 rounded-lg font-medium text-sm hover:bg-red-100 transition-colors">OpenCV</span>
-                  <span className="px-4 py-2 bg-pink-50 text-pink-700 rounded-lg font-medium text-sm hover:bg-pink-100 transition-colors">Computer Vision</span>
-                  <span className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg font-medium text-sm hover:bg-indigo-100 transition-colors">OpenPose</span>
-                  <span className="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg font-medium text-sm hover:bg-emerald-100 transition-colors">OpenAI</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">
+                    Machine Learning
+                  </span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">AI</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">OpenCV</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">
+                    Computer Vision
+                  </span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">OpenPose</span>
+                  <span className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors">OpenAI</span>
                 </div>
               </div>
             </div>
           </div>
-        </section>
+        </ParallaxSection>
 
         {/* Projects Section */}
-        <section id="projects" className="py-20 px-4 bg-[#d5d5d3]/50">
+        <ParallaxSection id="projects" backgroundColor="#e3e3e1" className="py-20 px-4" speed={0.3}>
           <div className="max-w-6xl mx-auto">
             <h2 className="text-4xl font-bold text-center mb-4 text-black">Featured Projects</h2>
             <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
@@ -786,9 +751,9 @@ export default function Home() {
                   className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col"
                 >
                   {/* Project Image */}
-                  <div className="relative h-48 bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400 overflow-hidden">
+                  <div className="relative h-48 bg-gray-100 overflow-hidden">
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-white text-center p-4">
+                      <div className="text-gray-800 text-center p-4">
                         <div className="text-6xl mb-2">
                           {project.category === "Web3" && "⛓️"}
                           {project.category === "Full Stack" && "🌐"}
@@ -796,7 +761,7 @@ export default function Home() {
                           {project.category === "AI/ML" && "🤖"}
                           {project.category === "Desktop" && "💻"}
                         </div>
-                        <span className="text-sm font-semibold uppercase tracking-wider">{project.category}</span>
+                        <span className="text-sm font-semibold uppercase tracking-wider text-gray-700">{project.category}</span>
                       </div>
                     </div>
                   </div>
@@ -809,7 +774,7 @@ export default function Home() {
                     {/* Tech Stack Tags */}
                     <div className="flex flex-wrap gap-2 mb-4">
                       {project.techStack.map((tech, techIndex) => (
-                        <span key={techIndex} className={`px-2.5 py-1 rounded-full text-xs font-medium ${techColors[tech] || "bg-gray-100 text-gray-600"}`}>
+                        <span key={techIndex} className={`px-2.5 py-1 rounded-full text-xs font-medium ${defaultTechStyle}`}>
                           {tech}
                         </span>
                       ))}
@@ -839,7 +804,7 @@ export default function Home() {
                           href={project.demo}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path
@@ -873,10 +838,10 @@ export default function Home() {
               </a>
             </div>
           </div>
-        </section>
+        </ParallaxSection>
 
         {/* Experience Section */}
-        <section id="experience" className="py-20 px-4">
+        <ParallaxSection id="experience" backgroundColor="#e3e3e1" className="py-20 px-4" speed={0.2}>
           <div className="max-w-5xl mx-auto">
             <h2 className="text-4xl font-bold text-center mb-4 text-black">Work Experience</h2>
             <p className="text-center text-gray-600 mb-12">14+ years of professional software development experience</p>
@@ -888,11 +853,11 @@ export default function Home() {
                     <div className="flex-grow">
                       <div className="flex items-start gap-3">
                         <div className="flex-shrink-0 mt-1">
-                          <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">{index + 1}</div>
+                          <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center text-white font-bold text-sm">{index + 1}</div>
                         </div>
                         <div>
                           <h3 className="text-xl font-bold text-gray-900">{exp.role}</h3>
-                          <p className="text-lg text-blue-600 font-medium">{exp.company}</p>
+                          <p className="text-lg text-black font-medium">{exp.company}</p>
                           <p className="text-sm text-gray-500 mt-1">
                             <span className="inline-flex items-center gap-1">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -913,7 +878,7 @@ export default function Home() {
                     {/* Tech Stack Pills */}
                     <div className="flex flex-wrap gap-2 md:max-w-xs">
                       {exp.techStack.map((tech, techIdx) => (
-                        <span key={techIdx} className={`px-2.5 py-1 rounded-full text-xs font-medium ${techColors[tech] || "bg-gray-100 text-gray-600"}`}>
+                        <span key={techIdx} className={`px-2.5 py-1 rounded-full text-xs font-medium ${defaultTechStyle}`}>
                           {tech}
                         </span>
                       ))}
@@ -929,7 +894,7 @@ export default function Home() {
                     <ul className="space-y-2">
                       {exp.achievements.map((achievement, achIdx) => (
                         <li key={achIdx} className="text-gray-700 text-sm flex items-start gap-2">
-                          <span className="text-blue-600 mt-1 flex-shrink-0">▸</span>
+                          <span className="text-black mt-1 flex-shrink-0">▸</span>
                           <span>{achievement}</span>
                         </li>
                       ))}
@@ -955,28 +920,28 @@ export default function Home() {
 
             {/* Career Summary Stats */}
             <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-blue-50 p-4 rounded-lg text-center">
-                <div className="text-3xl font-bold text-blue-600">14+</div>
+              <div className="bg-gray-50 p-4 rounded-lg text-center border border-gray-200">
+                <div className="text-3xl font-bold text-black">14+</div>
                 <div className="text-sm text-gray-600 mt-1">Years Experience</div>
               </div>
-              <div className="bg-green-50 p-4 rounded-lg text-center">
-                <div className="text-3xl font-bold text-green-600">5</div>
+              <div className="bg-gray-50 p-4 rounded-lg text-center border border-gray-200">
+                <div className="text-3xl font-bold text-black">5</div>
                 <div className="text-sm text-gray-600 mt-1">Companies</div>
               </div>
-              <div className="bg-purple-50 p-4 rounded-lg text-center">
-                <div className="text-3xl font-bold text-purple-600">20+</div>
+              <div className="bg-gray-50 p-4 rounded-lg text-center border border-gray-200">
+                <div className="text-3xl font-bold text-black">20+</div>
                 <div className="text-sm text-gray-600 mt-1">Projects Delivered</div>
               </div>
-              <div className="bg-orange-50 p-4 rounded-lg text-center">
-                <div className="text-3xl font-bold text-orange-600">10+</div>
+              <div className="bg-gray-50 p-4 rounded-lg text-center border border-gray-200">
+                <div className="text-3xl font-bold text-black">10+</div>
                 <div className="text-sm text-gray-600 mt-1">Technologies</div>
               </div>
             </div>
           </div>
-        </section>
+        </ParallaxSection>
 
         {/* Achievements Section */}
-        <section id="achievements" className="py-20 px-4 bg-[#d5d5d3]/50">
+        <ParallaxSection id="achievements" backgroundColor="#e3e3e1" className="py-20 px-4" speed={0.26}>
           <div className="max-w-6xl mx-auto">
             <h2 className="text-4xl font-bold text-center mb-4 text-black">Key Achievements</h2>
             <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
@@ -994,29 +959,7 @@ export default function Home() {
 
                   {/* Category Badge */}
                   <div className="mb-3">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
-                        achievement.category === "Award"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : achievement.category === "Recognition"
-                          ? "bg-pink-100 text-pink-700"
-                          : achievement.category === "Leadership"
-                          ? "bg-blue-100 text-blue-700"
-                          : achievement.category === "Innovation"
-                          ? "bg-purple-100 text-purple-700"
-                          : achievement.category === "Performance"
-                          ? "bg-green-100 text-green-700"
-                          : achievement.category === "Technology"
-                          ? "bg-orange-100 text-orange-700"
-                          : achievement.category === "Development"
-                          ? "bg-cyan-100 text-cyan-700"
-                          : achievement.category === "Web3"
-                          ? "bg-indigo-100 text-indigo-700"
-                          : achievement.category === "Impact"
-                          ? "bg-red-100 text-red-700"
-                          : "bg-gray-100 text-gray-700"
-                      }`}
-                    >
+                    <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-gray-100 text-gray-700">
                       {achievement.category}
                     </span>
                   </div>
@@ -1031,32 +974,32 @@ export default function Home() {
             </div>
 
             {/* Summary Stats */}
-            <div className="mt-16 bg-white/70 rounded-2xl p-8 shadow-lg">
+            <div className="mt-16 bg-white/70 rounded-2xl p-8 shadow-lg border border-gray-200">
               <h3 className="text-2xl font-bold text-center mb-8 text-gray-900">Career Highlights</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div className="text-center">
-                  <div className="text-4xl font-bold text-blue-600 mb-2">20+</div>
+                  <div className="text-4xl font-bold text-black mb-2">20+</div>
                   <div className="text-sm text-gray-600">Projects Completed</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-4xl font-bold text-green-600 mb-2">4+</div>
+                  <div className="text-4xl font-bold text-black mb-2">4+</div>
                   <div className="text-sm text-gray-600">Startups Supported</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-4xl font-bold text-purple-600 mb-2">10+</div>
+                  <div className="text-4xl font-bold text-black mb-2">10+</div>
                   <div className="text-sm text-gray-600">Tech Stacks Mastered</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-4xl font-bold text-orange-600 mb-2">1</div>
+                  <div className="text-4xl font-bold text-black mb-2">1</div>
                   <div className="text-sm text-gray-600">Hackathon Award</div>
                 </div>
               </div>
             </div>
           </div>
-        </section>
+        </ParallaxSection>
 
         {/* Education Section */}
-        <section id="education" className="py-20 px-4">
+        <ParallaxSection id="education" backgroundColor="#e3e3e1" className="py-20 px-4" speed={0.19}>
           <div className="max-w-4xl mx-auto">
             <h2 className="text-4xl font-bold text-center mb-4 text-black">Education</h2>
             <p className="text-center text-gray-600 mb-12">Academic qualifications and professional certifications</p>
@@ -1067,9 +1010,7 @@ export default function Home() {
                   <div className="flex items-start gap-4">
                     {/* Icon */}
                     <div className="flex-shrink-0 mt-1">
-                      <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-3xl">
-                        {edu.icon}
-                      </div>
+                      <div className="w-14 h-14 bg-black rounded-full flex items-center justify-center text-3xl">{edu.icon}</div>
                     </div>
 
                     {/* Content */}
@@ -1077,7 +1018,7 @@ export default function Home() {
                       <div className="flex items-start justify-between gap-4 flex-wrap">
                         <div>
                           <h3 className="text-xl font-bold text-gray-900 mb-1">{edu.degree}</h3>
-                          <p className="text-lg text-blue-600 font-medium mb-1">{edu.institution}</p>
+                          <p className="text-lg text-black font-medium mb-1">{edu.institution}</p>
                           <div className="flex items-center gap-4 text-sm text-gray-600 mt-2">
                             <span className="inline-flex items-center gap-1">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1107,13 +1048,7 @@ export default function Home() {
 
                         {/* Type Badge */}
                         <div>
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
-                              edu.type === "Higher Education" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"
-                            }`}
-                          >
-                            {edu.type}
-                          </span>
+                          <span className="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-gray-100 text-gray-700">{edu.type}</span>
                         </div>
                       </div>
                     </div>
@@ -1123,7 +1058,7 @@ export default function Home() {
             </div>
 
             {/* Education Summary */}
-            <div className="mt-12 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200">
+            <div className="mt-12 bg-gray-50 rounded-xl p-6 border border-gray-200">
               <div className="flex items-center gap-3 mb-4">
                 <div className="text-3xl">💡</div>
                 <h3 className="text-xl font-bold text-gray-900">Continuous Learning</h3>
@@ -1134,10 +1069,10 @@ export default function Home() {
               </p>
             </div>
           </div>
-        </section>
+        </ParallaxSection>
 
         {/* Contact Section */}
-        <section id="contact" className="py-20 px-4 bg-[#d5d5d3]/50">
+        <ParallaxSection id="contact" backgroundColor="#e3e3e1" className="py-20 px-4" speed={0.24}>
           <div className="max-w-5xl mx-auto">
             <h2 className="text-4xl font-bold text-center mb-4 text-black">Get In Touch</h2>
             <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
@@ -1151,7 +1086,7 @@ export default function Home() {
                 href="mailto:supunlakmal61@gmail.com"
                 className="bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 text-center group"
               >
-                <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
@@ -1170,7 +1105,7 @@ export default function Home() {
                 href="tel:+94715546940"
                 className="bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 text-center group"
               >
-                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
@@ -1186,7 +1121,7 @@ export default function Home() {
 
               {/* Location Card */}
               <div className="bg-white p-6 rounded-xl shadow-lg text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
@@ -1228,7 +1163,7 @@ export default function Home() {
                   href="https://www.linkedin.com/in/supun-lakmal/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
+                  className="flex items-center gap-3 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors shadow-md hover:shadow-lg"
                 >
                   <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
@@ -1241,7 +1176,7 @@ export default function Home() {
                   href="https://supunlakmal.github.io/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-md hover:shadow-lg"
+                  className="flex items-center gap-3 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors shadow-md hover:shadow-lg"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -1259,7 +1194,7 @@ export default function Home() {
                   href="https://www.youtube.com/channel/UC48UuOQIHZ3wNm4qA832u8Q"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-md hover:shadow-lg"
+                  className="flex items-center gap-3 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors shadow-md hover:shadow-lg"
                 >
                   <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
@@ -1272,7 +1207,7 @@ export default function Home() {
                   href="https://www.reddit.com/user/lakmal007"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors shadow-md hover:shadow-lg"
+                  className="flex items-center gap-3 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors shadow-md hover:shadow-lg"
                 >
                   <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z" />
@@ -1285,7 +1220,7 @@ export default function Home() {
                   href="https://stackoverflow.com/cv/supunabesekara"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors shadow-md hover:shadow-lg"
+                  className="flex items-center gap-3 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors shadow-md hover:shadow-lg"
                 >
                   <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M15.725 0l-1.72 1.277 6.39 8.588 1.716-1.277L15.725 0zm-3.94 3.418l-1.369 1.644 8.225 6.85 1.369-1.644-8.225-6.85zm-3.15 4.465l-.905 1.94 9.702 4.517.904-1.94-9.701-4.517zm-1.85 4.86l-.44 2.093 10.473 2.201.44-2.092-10.473-2.203zM1.89 15.47V24h19.19v-8.53h-2.133v6.397H4.021v-6.396H1.89zm4.265 2.133v2.13h10.66v-2.13H6.154Z" />
@@ -1297,13 +1232,13 @@ export default function Home() {
 
             {/* Availability Status */}
             <div className="mt-8 text-center">
-              <div className="inline-flex items-center gap-2 px-6 py-3 bg-green-100 text-green-800 rounded-full font-medium">
-                <div className="w-3 h-3 bg-green-600 rounded-full animate-pulse"></div>
+              <div className="inline-flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-800 rounded-full font-medium border border-gray-200">
+                <div className="w-3 h-3 bg-black rounded-full animate-pulse"></div>
                 Available for freelance projects and collaborations
               </div>
             </div>
           </div>
-        </section>
+        </ParallaxSection>
 
         {/* Footer */}
         <footer className="py-8 px-4 border-t border-gray-200 text-center">
