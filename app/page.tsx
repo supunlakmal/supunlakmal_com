@@ -2,19 +2,85 @@
 
 import Hero from "./components/Hero";
 import AnimatedBackground from "./components/AnimatedBackground";
-import { useState } from "react";
+import Navigation from "./components/Navigation";
+import { useEffect, useRef, type ReactNode } from "react";
+
+type ParallaxSectionProps = {
+  id: string;
+  backgroundColor: string;
+  speed?: number;
+  className?: string;
+  children: ReactNode;
+};
+
+const ParallaxSection = ({ id, backgroundColor, speed = 0.25, className = "", children }: ParallaxSectionProps) => {
+  const backgroundRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const backgroundEl = backgroundRef.current;
+    if (!backgroundEl) {
+      return;
+    }
+
+    let frameId: number | null = null;
+
+    const updateParallax = () => {
+      const parent = backgroundEl.parentElement;
+      if (!parent) {
+        return;
+      }
+
+      const rect = parent.getBoundingClientRect();
+      const offset = -rect.top * speed;
+      backgroundEl.style.transform = `translate3d(0, ${offset}px, 0)`;
+    };
+
+    const handleScroll = () => {
+      if (frameId !== null) {
+        return;
+      }
+
+      frameId = window.requestAnimationFrame(() => {
+        updateParallax();
+        frameId = null;
+      });
+    };
+
+    updateParallax();
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll);
+
+    return () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+    };
+  }, [speed]);
+
+  const composedClassName = `relative overflow-hidden ${className}`.trim();
+
+  return (
+    <section id={id} className={composedClassName}>
+      <div
+        ref={backgroundRef}
+        className="pointer-events-none absolute left-0 right-0 -z-10"
+        style={{
+          backgroundColor,
+          top: "-20%",
+          height: "140%",
+          transform: "translate3d(0, 0, 0)",
+          willChange: "transform",
+        }}
+      />
+      <div className="relative z-10">{children}</div>
+    </section>
+  );
+};
 
 export default function Home() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-      setMobileMenuOpen(false);
-    }
-  };
-
   // Projects Data
   const projects = [
     {
@@ -350,105 +416,6 @@ export default function Home() {
       <AnimatedBackground />
 
       {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-[#e3e3e1]/95 backdrop-blur-md border-b border-gray-300 shadow-sm" style={{ zIndex: 100 }}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
-          <div className="flex justify-between items-center">
-            {/* Logo/Name */}
-            <div className="flex items-center">
-              <button
-                onClick={() => scrollToSection("hero")}
-                className="text-xl sm:text-2xl font-bold tracking-tight text-black hover:text-blue-600 transition-colors"
-              >
-                Supun Lakmal
-              </button>
-            </div>
-
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-8">
-              <button onClick={() => scrollToSection("about")} className="text-sm font-medium text-black hover:text-blue-600 transition-colors">
-                About
-              </button>
-              <button onClick={() => scrollToSection("skills")} className="text-sm font-medium text-black hover:text-blue-600 transition-colors">
-                Skills
-              </button>
-              <button onClick={() => scrollToSection("projects")} className="text-sm font-medium text-black hover:text-blue-600 transition-colors">
-                Projects
-              </button>
-              <button onClick={() => scrollToSection("experience")} className="text-sm font-medium text-black hover:text-blue-600 transition-colors">
-                Experience
-              </button>
-              <button onClick={() => scrollToSection("contact")} className="text-sm font-medium text-black hover:text-blue-600 transition-colors">
-                Contact
-              </button>
-              <a
-                href="/Supun_Lakml_CV_2025.pdf"
-                download
-                className="ml-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Download CV
-              </a>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 text-black hover:text-blue-600 transition-colors">
-              {mobileMenuOpen ? (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              ) : (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              )}
-            </button>
-          </div>
-
-          {/* Mobile Menu */}
-          {mobileMenuOpen && (
-            <div className="md:hidden mt-4 pb-4 border-t border-gray-300 pt-4">
-              <div className="flex flex-col gap-3">
-                <button
-                  onClick={() => scrollToSection("about")}
-                  className="text-left py-2 text-sm font-medium text-black hover:text-blue-600 transition-colors"
-                >
-                  About
-                </button>
-                <button
-                  onClick={() => scrollToSection("skills")}
-                  className="text-left py-2 text-sm font-medium text-black hover:text-blue-600 transition-colors"
-                >
-                  Skills
-                </button>
-                <button
-                  onClick={() => scrollToSection("projects")}
-                  className="text-left py-2 text-sm font-medium text-black hover:text-blue-600 transition-colors"
-                >
-                  Projects
-                </button>
-                <button
-                  onClick={() => scrollToSection("experience")}
-                  className="text-left py-2 text-sm font-medium text-black hover:text-blue-600 transition-colors"
-                >
-                  Experience
-                </button>
-                <button
-                  onClick={() => scrollToSection("contact")}
-                  className="text-left py-2 text-sm font-medium text-black hover:text-blue-600 transition-colors"
-                >
-                  Contact
-                </button>
-                <a
-                  href="/Supun_Lakml_CV_2025.pdf"
-                  download
-                  className="mt-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors text-center"
-                >
-                  Download CV
-                </a>
-              </div>
-            </div>
-          )}
-        </div>
-      </nav>
 
       {/* Main Content Wrapper */}
       <div className="relative" style={{ zIndex: 10 }}>
@@ -462,7 +429,7 @@ export default function Home() {
         </section>
 
         {/* About Section */}
-        <section id="about" className="py-20 px-4 bg-[#d5d5d3]/50">
+        <ParallaxSection id="about" backgroundColor="#e3e3e1" className="py-20 px-4" speed={0.18}>
           <div className="max-w-5xl mx-auto">
             <h2 className="text-4xl font-bold text-center mb-4 text-black">About Me</h2>
             <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
@@ -620,15 +587,13 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </section>
+        </ParallaxSection>
 
         {/* Skills Section */}
-        <section id="skills" className="py-20 px-4">
+        <ParallaxSection id="skills" backgroundColor="#e3e3e1" className="py-20 px-4" speed={0.22}>
           <div className="max-w-6xl mx-auto">
             <h2 className="text-4xl font-bold text-center mb-4 text-black">Technical Skills</h2>
-            <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-              Expertise across modern web technologies, frameworks, and development tools
-            </p>
+            <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">Expertise across modern web technologies, frameworks, and development tools</p>
 
             <div className="space-y-8">
               {/* Frontend Technologies */}
@@ -636,7 +601,12 @@ export default function Home() {
                 <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200">
                   <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
                     </svg>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900">Frontend Development</h3>
@@ -649,7 +619,9 @@ export default function Home() {
                   <span className="px-4 py-2 bg-cyan-50 text-cyan-700 rounded-lg font-medium text-sm hover:bg-cyan-100 transition-colors">Tailwind CSS</span>
                   <span className="px-4 py-2 bg-pink-50 text-pink-700 rounded-lg font-medium text-sm hover:bg-pink-100 transition-colors">SCSS</span>
                   <span className="px-4 py-2 bg-blue-50 text-blue-800 rounded-lg font-medium text-sm hover:bg-blue-100 transition-colors">TypeScript</span>
-                  <span className="px-4 py-2 bg-yellow-50 text-yellow-700 rounded-lg font-medium text-sm hover:bg-yellow-100 transition-colors">JavaScript</span>
+                  <span className="px-4 py-2 bg-yellow-50 text-yellow-700 rounded-lg font-medium text-sm hover:bg-yellow-100 transition-colors">
+                    JavaScript
+                  </span>
                 </div>
               </div>
 
@@ -658,7 +630,12 @@ export default function Home() {
                 <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200">
                   <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"
+                      />
                     </svg>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900">Backend Development</h3>
@@ -679,7 +656,12 @@ export default function Home() {
                 <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200">
                   <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"
+                      />
                     </svg>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900">Databases & Storage</h3>
@@ -698,7 +680,12 @@ export default function Home() {
                 <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200">
                   <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
+                      />
                     </svg>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900">Mobile & Desktop</h3>
@@ -714,7 +701,12 @@ export default function Home() {
                 <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200">
                   <div className="w-10 h-10 bg-gradient-to-br from-sky-500 to-sky-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"
+                      />
                     </svg>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900">Cloud & DevOps</h3>
@@ -733,7 +725,12 @@ export default function Home() {
                 <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200">
                   <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                      />
                     </svg>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900">Blockchain & Web3</h3>
@@ -753,13 +750,20 @@ export default function Home() {
                 <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200">
                   <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                      />
                     </svg>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900">AI/ML & Specialized</h3>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <span className="px-4 py-2 bg-purple-50 text-purple-700 rounded-lg font-medium text-sm hover:bg-purple-100 transition-colors">Machine Learning</span>
+                  <span className="px-4 py-2 bg-purple-50 text-purple-700 rounded-lg font-medium text-sm hover:bg-purple-100 transition-colors">
+                    Machine Learning
+                  </span>
                   <span className="px-4 py-2 bg-purple-50 text-purple-600 rounded-lg font-medium text-sm hover:bg-purple-100 transition-colors">AI</span>
                   <span className="px-4 py-2 bg-red-50 text-red-700 rounded-lg font-medium text-sm hover:bg-red-100 transition-colors">OpenCV</span>
                   <span className="px-4 py-2 bg-pink-50 text-pink-700 rounded-lg font-medium text-sm hover:bg-pink-100 transition-colors">Computer Vision</span>
@@ -769,10 +773,10 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </section>
+        </ParallaxSection>
 
         {/* Projects Section */}
-        <section id="projects" className="py-20 px-4 bg-[#d5d5d3]/50">
+        <ParallaxSection id="projects" backgroundColor="#e3e3e1" className="py-20 px-4" speed={0.3}>
           <div className="max-w-6xl mx-auto">
             <h2 className="text-4xl font-bold text-center mb-4 text-black">Featured Projects</h2>
             <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
@@ -873,10 +877,10 @@ export default function Home() {
               </a>
             </div>
           </div>
-        </section>
+        </ParallaxSection>
 
         {/* Experience Section */}
-        <section id="experience" className="py-20 px-4">
+        <ParallaxSection id="experience" backgroundColor="#e3e3e1" className="py-20 px-4" speed={0.2}>
           <div className="max-w-5xl mx-auto">
             <h2 className="text-4xl font-bold text-center mb-4 text-black">Work Experience</h2>
             <p className="text-center text-gray-600 mb-12">14+ years of professional software development experience</p>
@@ -973,10 +977,10 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </section>
+        </ParallaxSection>
 
         {/* Achievements Section */}
-        <section id="achievements" className="py-20 px-4 bg-[#d5d5d3]/50">
+        <ParallaxSection id="achievements" backgroundColor="#e3e3e1" className="py-20 px-4" speed={0.26}>
           <div className="max-w-6xl mx-auto">
             <h2 className="text-4xl font-bold text-center mb-4 text-black">Key Achievements</h2>
             <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
@@ -1053,10 +1057,10 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </section>
+        </ParallaxSection>
 
         {/* Education Section */}
-        <section id="education" className="py-20 px-4">
+        <ParallaxSection id="education" backgroundColor="#e3e3e1" className="py-20 px-4" speed={0.19}>
           <div className="max-w-4xl mx-auto">
             <h2 className="text-4xl font-bold text-center mb-4 text-black">Education</h2>
             <p className="text-center text-gray-600 mb-12">Academic qualifications and professional certifications</p>
@@ -1134,10 +1138,10 @@ export default function Home() {
               </p>
             </div>
           </div>
-        </section>
+        </ParallaxSection>
 
         {/* Contact Section */}
-        <section id="contact" className="py-20 px-4 bg-[#d5d5d3]/50">
+        <ParallaxSection id="contact" backgroundColor="#e3e3e1" className="py-20 px-4" speed={0.24}>
           <div className="max-w-5xl mx-auto">
             <h2 className="text-4xl font-bold text-center mb-4 text-black">Get In Touch</h2>
             <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
@@ -1303,7 +1307,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </section>
+        </ParallaxSection>
 
         {/* Footer */}
         <footer className="py-8 px-4 border-t border-gray-200 text-center">
