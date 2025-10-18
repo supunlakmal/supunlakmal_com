@@ -33,11 +33,11 @@ const experiments: ExperimentMeta[] = [
 ];
 
 const categoryColors = {
-  "Particle Systems": "bg-blue-100 text-blue-700",
-  "Network": "bg-purple-100 text-purple-700",
-  "Chaotic Systems": "bg-orange-100 text-orange-700",
-  "Physics": "bg-green-100 text-green-700",
-  "Procedural 3D": "bg-pink-100 text-pink-700",
+  "Particle Systems": "bg-gray-100 text-gray-700",
+  "Network": "bg-gray-100 text-gray-700",
+  "Chaotic Systems": "bg-gray-100 text-gray-700",
+  "Physics": "bg-gray-100 text-gray-700",
+  "Procedural 3D": "bg-gray-100 text-gray-700",
 };
 
 // Component for individual experiment card
@@ -108,7 +108,7 @@ function ExperimentCard({ experiment }: { experiment: ExperimentMeta }) {
         <p className="text-sm text-gray-600 mb-4">{experiment.description}</p>
         <Link
           href={experiment.path}
-          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm"
+          className="inline-flex items-center gap-2 text-black hover:text-gray-700 font-medium text-sm"
         >
           Launch Experiment
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,7 +132,7 @@ export default function ExperimentsGallery() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white py-20 px-4">
+      <div className="bg-black text-white py-20 px-4">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-5xl font-bold mb-4">Creative Experiments</h1>
           <p className="text-xl text-gray-300 max-w-3xl">
@@ -141,11 +141,11 @@ export default function ExperimentsGallery() {
           </p>
           <div className="mt-8 flex items-center gap-4 text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+              <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
               <span>{filteredExperiments.length} Interactive Experiments</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
               <span>All Mouse Interactive</span>
             </div>
           </div>
@@ -163,7 +163,7 @@ export default function ExperimentsGallery() {
                 onClick={() => setSelectedCategory(category)}
                 className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
                   selectedCategory === category
-                    ? "bg-blue-600 text-white shadow-md"
+                    ? "bg-black text-white shadow-md"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
@@ -192,7 +192,7 @@ export default function ExperimentsGallery() {
       </div>
 
       {/* Tips Section */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 py-12 px-4 mt-12">
+      <div className="bg-gray-50 py-12 px-4 mt-12">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Interaction Tips</h2>
           <div className="grid md:grid-cols-3 gap-6">

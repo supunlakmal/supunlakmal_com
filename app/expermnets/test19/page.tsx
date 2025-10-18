@@ -11,6 +11,15 @@ interface Node {
   state: "building" | "decaying";
 }
 
+// --- Configuration (outside component for stability) ---
+const config = {
+  gridSize: 150,
+  viewDistance: 4, // in grid units
+  buildSpeed: 0.05,
+  decaySpeed: 0.01,
+  blueprintDuration: 90, // frames
+};
+
 export default function ArchitectsDreamBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number | undefined>(undefined);
@@ -20,15 +29,6 @@ export default function ArchitectsDreamBackground() {
   const mouseRef = useRef({ x: 0, y: 0, isMoving: false });
   const mouseMoveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const blueprintStateRef = useRef({ isActive: false, timer: 0 });
-
-  // --- Configuration ---
-  const config = {
-    gridSize: 150,
-    viewDistance: 4, // in grid units
-    buildSpeed: 0.05,
-    decaySpeed: 0.01,
-    blueprintDuration: 90, // frames
-  };
 
   const project = (p: { x: number; y: number; z: number }, canvasWidth: number, canvasHeight: number) => {
     const relativeZ = p.z - cameraRef.current.z;
@@ -97,7 +97,7 @@ export default function ArchitectsDreamBackground() {
       const camGridY = Math.round(cameraRef.current.y / config.gridSize);
       const camGridZ = Math.round(cameraRef.current.z / config.gridSize);
 
-      const nodesToDraw: { p1: any; p2: any; life: number }[] = [];
+      const nodesToDraw: { p1: Node; p2: Node; life: number }[] = [];
 
       for (let z = -config.viewDistance; z <= config.viewDistance; z++) {
         for (let y = -config.viewDistance; y <= config.viewDistance; y++) {
@@ -141,8 +141,9 @@ export default function ArchitectsDreamBackground() {
                 ];
                 neighbors.forEach((n) => {
                   const neighborId = `${worldX + n[0] * config.gridSize},${worldY + n[1] * config.gridSize},${worldZ + n[2] * config.gridSize}`;
-                  if (nodesRef.current.has(neighborId)) {
-                    nodesToDraw.push({ p1: node, p2: nodesRef.current.get(neighborId), life: Math.min(node!.life, nodesRef.current.get(neighborId)!.life) });
+                  const neighbor = nodesRef.current.get(neighborId);
+                  if (neighbor) {
+                    nodesToDraw.push({ p1: node!, p2: neighbor, life: Math.min(node!.life, neighbor.life) });
                   }
                 });
               }
@@ -158,7 +159,6 @@ export default function ArchitectsDreamBackground() {
         const proj1 = project(link.p1, canvas.width, canvas.height);
         const proj2 = project(link.p2!, canvas.width, canvas.height);
         if (proj1.scale > 0 && proj2.scale > 0) {
-          const length = Math.sqrt(Math.pow(proj2.x - proj1.x, 2) + Math.pow(proj2.y - proj1.y, 2));
           const midX = proj1.x + (proj2.x - proj1.x) * link.life;
           const midY = proj1.y + (proj2.y - proj1.y) * link.life;
 
