@@ -12,10 +12,7 @@ export default function Navigation() {
         <div className="flex justify-between items-center">
           {/* Logo/Name */}
           <div className="flex items-center">
-            <Link
-              href="/#hero"
-              className="text-xl sm:text-2xl font-bold tracking-tight text-black hover:text-blue-600 transition-colors"
-            >
+            <Link href="/#hero" className="text-xl sm:text-2xl font-bold tracking-tight text-black hover:text-blue-600 transition-colors">
               Supun Lakmal
             </Link>
           </div>
